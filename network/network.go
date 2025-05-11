@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"yabc/network/config"
 )
 
 const DefaultNodeAddress = "127.0.0.1:7071"
@@ -23,7 +22,7 @@ type Network struct {
 	mutex           sync.Mutex
 	discoveredPeers map[string]Peer
 	nodeAddress     string
-	config          *config.NetworkConfig
+	config          *Config
 }
 
 type Peer struct {
@@ -43,7 +42,7 @@ func NewNetwork(nodeAddress string, options map[string]string) *Network {
 		discoveredPeers: make(map[string]Peer),
 	}
 
-	network.config = config.NewNetworkConfig(options)
+	network.config = NewNetworkConfig(options)
 
 	network.server = NewServer(network)
 	network.client = NewClient(network)

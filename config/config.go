@@ -1,14 +1,14 @@
 package config
 
 type Config struct {
-	options map[string]string
+	Options map[string]string
 }
 
 func (c *Config) Get(key string) (string, bool) {
-	element, exists := c.options[key]
+	element, exists := c.Options[key]
 	return element, exists
 }
 
 func (c *Config) Set(key string, value string) {
-	c.options[key] = value
+	c.Options[key] = value
 }

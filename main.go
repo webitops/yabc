@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"yabc/network"
+	"yabc/blockchain"
 )
 
 func main() {
@@ -15,9 +15,9 @@ func main() {
 
 	options := make(map[string]string)
 	options["debug"] = fmt.Sprintf("%t", *debugMode)
+	options["node-address"] = *nodeAddressPtr
 
-	n := network.NewNetwork(*nodeAddressPtr, options)
+	bc := blockchain.NewBlockchain(options)
 
-	n.Start()
-
+	bc.Start()
 }

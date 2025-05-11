@@ -1,0 +1,93 @@
+package network
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"strings"
+	"time"
+)
+
+type Client struct {
+	network *Network
+}
+
+func NewClient(network *Network) *Client {
+	return &Client{
+		network: network,
+	}
+}
+
+func (c *Client) IntroduceSelf() {
+	c.SendToPeers(Identify, c.network.nodeAddress)
+}
+
+func (c *Client) RequestPeersList() {
+	for {
+		c.SendToPeers(RequestPeersList, "")
+		time.Sleep(5 * time.Second)
+		fmt.Println("My peers:", c.network.GetAllKnownPeersAddresses())
+	}
+}
+
+func (c *Client) SendToPeers(command string, params string) {
+
+	for peerAddress := range c.network.GetAllKnownPeersAddresses() {
+		if peerAddress == c.network.nodeAddress {
+			continue
+		}
+		conn, err := net.Dial("tcp", peerAddress)
+
+		if err != nil {
+			fmt.Println("Peer disconnected:", peerAddress)
+			c.network.peerDisconnected(peerAddress)
+			continue
+		}
+
+		_, err = conn.Write([]byte(command + CommandDelimiter + params + Eol))
+		if err != nil {
+			log.Fatal("Error writing to peer: ", err)
+		}
+
+		response, _ := bufio.NewReader(conn).ReadString(Eol[0])
+
+		c.handlePeerResponseForRequest(command, response, conn)
+
+		err = conn.Close()
+		if err != nil {
+			log.Fatal("Error closing connection: ", err)
+		}
+
+	}
+
+}
+
+func (c *Client) handlePeerResponseForRequest(command string, response string, conn net.Conn) {
+	switch command {
+	case RequestNodeAddress:
+		fmt.Println("sending my node address to peer: " + conn.RemoteAddr().String())
+		conn.Write([]byte(Identify + CommandDelimiter + c.network.nodeAddress + Eol))
+		break
+	case Identify:
+		break
+	case RequestPeersList:
+		fmt.Println("RP: Raw response:" + response)
+		responseElements := strings.Split(response, CommandDelimiter)
+		newPeersJson := responseElements[len(responseElements)-1]
+		newPeers := make(map[string]struct{})
+		err := json.Unmarshal([]byte(newPeersJson), &newPeers)
+		if err != nil {
+			log.Fatal("Error parsing peers list: ", err)
+			break
+		}
+		for newPeer := range newPeers {
+			c.network.AddNewDiscoveredPeer(newPeer, Peer{Connection: nil, Status: true})
+		}
+		break
+	default:
+		fmt.Println("Received other [SRC CMD:" + command + " ]: " + response)
+		break
+	}
+}

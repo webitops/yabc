@@ -45,6 +45,8 @@ func (c *Client) SendToPeers(command string, params string) {
 			continue
 		}
 
+		c.network.peerIsOnline(peerAddress)
+
 		_, err = conn.Write([]byte(command + CommandDelimiter + params + Eol))
 		if err != nil {
 			log.Print("Error writing to peer: ", err)
@@ -84,7 +86,7 @@ func (c *Client) handlePeerResponseForRequest(command string, response string, c
 			break
 		}
 		for newPeer := range newPeers {
-			c.network.AddNewDiscoveredPeer(newPeer, Peer{Connection: nil, Status: true})
+			c.network.AddNewDiscoveredPeer(newPeer, Peer{Connection: nil, Status: false})
 		}
 		break
 	default:

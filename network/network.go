@@ -70,7 +70,9 @@ func (n *Network) AddNewDiscoveredPeer(newPeerAddress string, newPeer Peer) {
 	func() {
 		n.mutex.Lock()
 		defer n.mutex.Unlock()
-		n.discoveredPeers[newPeerAddress] = newPeer
+		if _, exists := n.discoveredPeers[newPeerAddress]; !exists {
+			n.discoveredPeers[newPeerAddress] = newPeer
+		}
 	}()
 }
 
@@ -98,4 +100,13 @@ func (n *Network) PrintPeersList() {
 		fmt.Printf("- [%s]:\t %t\n", peerAddress, peer.Status)
 	}
 	fmt.Printf("###  END  Peers  List ###\n\n")
+}
+
+func (n *Network) peerIsOnline(peerAddress string) {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+	if peer, exists := n.discoveredPeers[peerAddress]; exists {
+		peer.Status = true
+		n.discoveredPeers[peerAddress] = peer
+	}
 }

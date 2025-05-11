@@ -52,23 +52,6 @@ func (s *Server) handlePeerRequest(conn net.Conn) {
 		}
 	}(conn)
 
-	if peer, exists := s.network.discoveredPeers[conn.RemoteAddr().String()]; exists {
-		peer.Connection = conn
-		peer.Status = true
-		s.network.AddNewDiscoveredPeer(conn.RemoteAddr().String(), peer)
-	} /* else {
-		fmt.Println("Requesting node address from peer:" + conn.RemoteAddr().String())
-		_, err := conn.Write([]byte(RequestNodeAddress + CommandDelimiter + Eol))
-		if err != nil {
-			log.Print("Error writing to peer: ", err)
-		}
-
-		nodeAddress, err := bufio.NewReader(conn).ReadString(Eol[0])
-
-		s.network.AddNewDiscoveredPeer(nodeAddress, Peer{Connection: nil, Status: true})
-		return
-	}*/
-
 	command, err := bufio.NewReader(conn).ReadString(Eol[0])
 
 	if err != nil {

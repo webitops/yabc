@@ -41,7 +41,6 @@ func (c *Client) SendToPeers(command string, params string) {
 		conn, err := net.Dial("tcp", peerAddress)
 
 		if err != nil {
-			fmt.Println("Peer disconnected:", peerAddress)
 			c.network.peerDisconnected(peerAddress)
 			continue
 		}

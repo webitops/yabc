@@ -21,6 +21,7 @@ func NewServer(network *Network) *Server {
 
 func (s *Server) Serve() {
 	ln, err := net.Listen("tcp", s.network.nodeAddress)
+
 	fmt.Println("Listening on " + s.network.nodeAddress)
 
 	if err != nil {
@@ -44,6 +45,10 @@ func (s *Server) Serve() {
 	}
 }
 
+func (s *Server) IsDebugEnabled() bool {
+	return s.network.config.IsDebugEnabled()
+}
+
 func (s *Server) handlePeerRequest(conn net.Conn) {
 	defer func(conn net.Conn) {
 		err := conn.Close()
@@ -55,7 +60,9 @@ func (s *Server) handlePeerRequest(conn net.Conn) {
 	command, err := bufio.NewReader(conn).ReadString(Eol[0])
 
 	if err != nil {
-		fmt.Println("Peer disconnected." + conn.RemoteAddr().String())
+		if s.IsDebugEnabled() {
+			fmt.Println("Peer disconnected." + conn.RemoteAddr().String())
+		}
 		s.network.peerDisconnected(conn.RemoteAddr().String())
 		return
 	}

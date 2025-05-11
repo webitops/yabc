@@ -28,11 +28,20 @@ func (c *Client) RequestPeersList() {
 	for {
 		c.SendToPeers(RequestPeersList, "")
 		time.Sleep(5 * time.Second)
-		c.network.PrintPeersList()
+		if c.IsDebugEnabled() {
+			c.network.PrintPeersList()
+		}
 	}
 }
 
+func (c *Client) IsDebugEnabled() bool {
+	return c.network.config.IsDebugEnabled()
+}
+
 func (c *Client) SendToPeers(command string, params string) {
+	if c.IsDebugEnabled() {
+		fmt.Printf("\n[As Client] Sending to peers: \nCMD[%s]\nPARAMS[%s]\n", command, params)
+	}
 
 	for peerAddress := range c.network.GetAllKnownPeersAddresses() {
 		if peerAddress == c.network.nodeAddress {
@@ -54,6 +63,9 @@ func (c *Client) SendToPeers(command string, params string) {
 
 		response, _ := bufio.NewReader(conn).ReadString(Eol[0])
 
+		if c.IsDebugEnabled() {
+			fmt.Printf("\n[As Client] received from peer: \nPEER[%s]\nFOR CMD[%s]\nRESPONSE[%s]\n", conn.RemoteAddr().String(), command, response)
+		}
 		c.handlePeerResponseForRequest(command, response, conn)
 
 		err = conn.Close()
@@ -68,7 +80,6 @@ func (c *Client) SendToPeers(command string, params string) {
 func (c *Client) handlePeerResponseForRequest(command string, response string, conn net.Conn) {
 	switch command {
 	case RequestNodeAddress:
-		fmt.Println("sending my node address to peer: " + conn.RemoteAddr().String())
 		_, err := conn.Write([]byte(Identify + CommandDelimiter + c.network.nodeAddress + Eol))
 		if err != nil {
 			log.Print("Error writing to peer: ", err)
@@ -90,7 +101,7 @@ func (c *Client) handlePeerResponseForRequest(command string, response string, c
 		}
 		break
 	default:
-		fmt.Println("Received other [SRC CMD:" + command + " ]: " + response)
+		fmt.Println("Received Unknown CMD [SRC CMD:" + command + " ]: " + response)
 		break
 	}
 }

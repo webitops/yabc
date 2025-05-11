@@ -90,7 +90,6 @@ func (s *Server) HandleRequestCommand(conn net.Conn, rawCommand string) {
 		}
 	} else if strings.Contains(rawCommand, RequestPeersList+CommandDelimiter) {
 		peersJson, err := json.Marshal(s.network.GetAllKnownPeersAddresses())
-		fmt.Println("RP sending this RAW: ", string(peersJson))
 		if err != nil {
 			log.Print("Error marshalling peers list: ", err)
 		}

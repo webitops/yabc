@@ -76,7 +76,6 @@ func (c *Client) handlePeerResponseForRequest(command string, response string, c
 	case Identify:
 		break
 	case RequestPeersList:
-		fmt.Println("RP: Raw response:" + response)
 		responseElements := strings.Split(response, CommandDelimiter)
 		newPeersJson := responseElements[len(responseElements)-1]
 		newPeers := make(map[string]struct{})

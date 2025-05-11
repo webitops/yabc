@@ -48,7 +48,7 @@ func (c *Client) SendToPeers(command string, params string) {
 
 		_, err = conn.Write([]byte(command + CommandDelimiter + params + Eol))
 		if err != nil {
-			log.Fatal("Error writing to peer: ", err)
+			log.Print("Error writing to peer: ", err)
 		}
 
 		response, _ := bufio.NewReader(conn).ReadString(Eol[0])
@@ -57,7 +57,7 @@ func (c *Client) SendToPeers(command string, params string) {
 
 		err = conn.Close()
 		if err != nil {
-			log.Fatal("Error closing connection: ", err)
+			log.Print("Error closing connection: ", err)
 		}
 
 	}
@@ -68,7 +68,10 @@ func (c *Client) handlePeerResponseForRequest(command string, response string, c
 	switch command {
 	case RequestNodeAddress:
 		fmt.Println("sending my node address to peer: " + conn.RemoteAddr().String())
-		conn.Write([]byte(Identify + CommandDelimiter + c.network.nodeAddress + Eol))
+		_, err := conn.Write([]byte(Identify + CommandDelimiter + c.network.nodeAddress + Eol))
+		if err != nil {
+			log.Print("Error writing to peer: ", err)
+		}
 		break
 	case Identify:
 		break
@@ -79,7 +82,7 @@ func (c *Client) handlePeerResponseForRequest(command string, response string, c
 		newPeers := make(map[string]struct{})
 		err := json.Unmarshal([]byte(newPeersJson), &newPeers)
 		if err != nil {
-			log.Fatal("Error parsing peers list: ", err)
+			log.Print("Error parsing peers list: ", err)
 			break
 		}
 		for newPeer := range newPeers {

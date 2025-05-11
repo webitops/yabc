@@ -28,7 +28,7 @@ func (c *Client) RequestPeersList() {
 	for {
 		c.SendToPeers(RequestPeersList, "")
 		time.Sleep(5 * time.Second)
-		fmt.Println("My peers:", c.network.GetAllKnownPeersAddresses())
+		c.network.PrintPeersList()
 	}
 }
 

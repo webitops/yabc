@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"net"
 	"sync"
 )
@@ -43,7 +44,19 @@ func NewNetwork(nodeAddress string) *Network {
 	network.server = NewServer(network)
 	network.client = NewClient(network)
 
+	network.initDefaultPeers()
+
 	return network
+}
+
+func (n *Network) initDefaultPeers() {
+	for _, peer := range n.getDefaultPeers() {
+		n.AddNewDiscoveredPeer(peer, Peer{Connection: nil, Status: false})
+	}
+}
+
+func (n *Network) getDefaultPeers() []string {
+	return []string{"127.0.0.1:7071", "127.0.0.1:1234"}
 }
 
 func (n *Network) Start() {
@@ -62,7 +75,6 @@ func (n *Network) AddNewDiscoveredPeer(newPeerAddress string, newPeer Peer) {
 }
 
 func (n *Network) GetAllKnownPeersAddresses() map[string]Peer {
-	n.AddNewDiscoveredPeer("127.0.0.1:7071", Peer{Connection: nil, Status: true})
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 	return n.discoveredPeers
@@ -75,4 +87,15 @@ func (n *Network) peerDisconnected(peerAddress string) {
 		peer.Status = false
 		n.discoveredPeers[peerAddress] = peer
 	}
+}
+
+func (n *Network) PrintPeersList() {
+	fmt.Printf("\n### START Peers List ###\n")
+	for peerAddress, peer := range n.GetAllKnownPeersAddresses() {
+		if peerAddress == n.nodeAddress {
+			continue
+		}
+		fmt.Printf("- [%s]:\t %t\n", peerAddress, peer.Status)
+	}
+	fmt.Printf("###  END  Peers  List ###\n\n")
 }

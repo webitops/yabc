@@ -61,7 +61,7 @@ func (s *Server) handlePeerRequest(conn net.Conn) {
 
 	if err != nil {
 		if s.IsDebugEnabled() {
-			fmt.Println("Peer disconnected." + conn.RemoteAddr().String())
+			fmt.Println("[As Server] Peer disconnected." + conn.RemoteAddr().String())
 		}
 		s.network.peerDisconnected(conn.RemoteAddr().String())
 		return
@@ -88,6 +88,8 @@ func (s *Server) HandleRequestCommand(conn net.Conn, rawCommand string) {
 			log.Print("Error writing to peer: ", err)
 		}
 	} else {
+		fmt.Println("[As Server] Received Unknown: " + rawCommand)
+
 		_, err := conn.Write([]byte(Done + Eol))
 		if err != nil {
 			log.Print("Error writing to peer: ", err)

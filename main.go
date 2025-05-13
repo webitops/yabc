@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"os"
 	"yabc/blockchain"
 )
 
@@ -11,13 +13,29 @@ func main() {
 
 	nodeAddressPtr := flag.String("node-address", "", "The address to listen on for HTTP requests.")
 	debugMode := flag.Bool("debug", false, "Enable debug mode.")
+	walletMode := flag.Bool("wallet", false, "Enable wallet mode.")
 	flag.Parse()
 
 	options := make(map[string]string)
 	options["debug"] = fmt.Sprintf("%t", *debugMode)
 	options["node-address"] = *nodeAddressPtr
-
 	bc := blockchain.NewBlockchain(options)
 
-	bc.Start()
+	go bc.Start()
+
+	if *walletMode {
+		fmt.Println("Wallet started.")
+		for {
+			fmt.Println("Transaction to send: ")
+			scanner := bufio.NewScanner(os.Stdin)
+			scanner.Scan()
+			answer := scanner.Text()
+			bc.BroadcastTransaction(answer)
+		}
+
+	}
+
+	// Wait.
+	wait := make(chan bool)
+	<-wait
 }

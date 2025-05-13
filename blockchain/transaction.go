@@ -1,9 +1,9 @@
 package blockchain
 
 type Transaction struct {
-	address   string
-	to        []string
-	amount    float64
-	signature string
-	data      string
+	Address   string   `json:"address"`
+	To        []string `json:"to"`
+	Amount    float64  `json:"amount"`
+	Signature string   `json:"signature"`
+	Data      string   `json:"data"`
 }

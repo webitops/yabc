@@ -30,6 +30,10 @@ type Peer struct {
 	Status     bool
 }
 
+func (n *Network) BroadcastMessage(message string) {
+	n.client.SendToPeers("", message)
+}
+
 func NewNetwork(nodeAddress string, options map[string]string) *Network {
 	finalNodeAddress := DefaultNodeAddress
 

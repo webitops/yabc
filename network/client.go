@@ -39,11 +39,13 @@ func (c *Client) IsDebugEnabled() bool {
 }
 
 func (c *Client) SendToPeers(command string, params string) {
-	if c.IsDebugEnabled() {
-		fmt.Printf("\n[As Client] Sending to peers: \nCMD[%s]\nPARAMS[%s]\n", command, params)
-	}
 
 	for peerAddress := range c.network.GetAllKnownPeersAddresses() {
+
+		if c.IsDebugEnabled() {
+			fmt.Printf("\n[As Client] Sending to: \nPEER[%s] \nCMD[%s]\nPARAMS[%s]\n", peerAddress, command, params)
+		}
+
 		if peerAddress == c.network.nodeAddress {
 			continue
 		}

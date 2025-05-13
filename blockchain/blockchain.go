@@ -70,3 +70,7 @@ func (b *Blockchain) handleWalletConnection(conn net.Conn) {
 	fmt.Println("Received transaction: ")
 	fmt.Println(string(transactions))
 }
+
+func (b *Blockchain) BroadcastTransaction(transaction string) {
+	b.network.BroadcastMessage(transaction)
+}

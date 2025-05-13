@@ -3,6 +3,7 @@ package blockchain
 import "yabc/network"
 
 type Blockchain struct {
+	blocks  []*Block
 	network *network.Network
 	config  *Config
 }

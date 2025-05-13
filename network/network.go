@@ -121,3 +121,7 @@ func (n *Network) peerIsOnline(peerAddress string) {
 		n.discoveredPeers[peerAddress] = peer
 	}
 }
+
+func (n *Network) GetNodeAddress() string {
+	return n.nodeAddress
+}

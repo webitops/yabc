@@ -74,3 +74,7 @@ func (b *Blockchain) handleWalletConnection(conn net.Conn) {
 func (b *Blockchain) BroadcastTransaction(transaction string) {
 	b.network.BroadcastMessage(transaction)
 }
+
+func (b *Blockchain) GetNodeAddress() string {
+	return b.network.GetNodeAddress()
+}

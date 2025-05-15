@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"yabc/blockchain"
+	"yabc/protocol"
 )
 
 type WalletSocket struct {
@@ -57,9 +58,13 @@ func (s *WalletSocket) handleWalletRequest(conn net.Conn) {
 
 	message, err := io.ReadAll(conn)
 
+	msg := &protocol.Message{}
+
+	msg, _ = protocol.DecodeMessage(message)
+
 	if err != nil {
 		log.Println("Error reading from connection: ", err)
 	}
 
-	s.blockchain.BroadcastTransaction(string(message))
+	s.blockchain.BroadcastTransaction(msg)
 }

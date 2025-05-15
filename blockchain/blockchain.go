@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"yabc/network"
+	"yabc/protocol"
 )
 
 type Blockchain struct {
@@ -71,8 +72,8 @@ func (b *Blockchain) handleWalletConnection(conn net.Conn) {
 	fmt.Println(string(transactions))
 }
 
-func (b *Blockchain) BroadcastTransaction(transaction string) {
-	b.network.BroadcastMessage(transaction)
+func (b *Blockchain) BroadcastTransaction(msg *protocol.Message) {
+	b.network.BroadcastMessage(msg)
 }
 
 func (b *Blockchain) GetNodeAddress() string {

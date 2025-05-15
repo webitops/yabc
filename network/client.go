@@ -1,13 +1,11 @@
 package network
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
-	"strings"
 	"time"
+	"yabc/protocol"
 )
 
 type Client struct {
@@ -20,14 +18,12 @@ func NewClient(network *Network) *Client {
 	}
 }
 
-func (c *Client) IntroduceSelf() {
-	c.SendToPeers(Identify, c.network.nodeAddress)
-}
-
 func (c *Client) RequestPeersList() {
+	msg := protocol.NewMessage(protocol.MsgPeerDiscovery, c.network.nodeAddress, c.network.GetNodeAddress())
+
 	for {
-		c.SendToPeers(RequestPeersList, "")
-		time.Sleep(5 * time.Second)
+		c.SendToPeers(msg)
+		time.Sleep(10 * time.Second)
 		if c.IsDebugEnabled() {
 			c.network.PrintPeersList()
 		}
@@ -38,72 +34,53 @@ func (c *Client) IsDebugEnabled() bool {
 	return c.network.config.IsDebugEnabled()
 }
 
-func (c *Client) SendToPeers(command string, params string) {
+func (c *Client) SendToPeers(msg *protocol.Message) {
 
 	for peerAddress := range c.network.GetAllKnownPeersAddresses() {
+		go func(peerAddress string) {
+			if peerAddress == c.network.nodeAddress {
+				return
+			}
 
-		if c.IsDebugEnabled() {
-			fmt.Printf("\n[As Client] Sending to: \nPEER[%s] \nCMD[%s]\nPARAMS[%s]\n", peerAddress, command, params)
-		}
+			conn, sendErr := net.Dial("tcp", peerAddress)
+			if sendErr != nil {
+				log.Println(sendErr)
+				return
+			}
+			defer conn.Close()
 
-		if peerAddress == c.network.nodeAddress {
-			continue
-		}
-		conn, err := net.Dial("tcp", peerAddress)
+			sendErr = protocol.Send(msg, conn)
 
-		if err != nil {
-			c.network.peerDisconnected(peerAddress)
-			continue
-		}
+			if sendErr != nil {
+				log.Println(sendErr)
+			}
 
-		c.network.peerIsOnline(peerAddress)
+			response, receiveErr := protocol.Receive(conn)
 
-		_, err = conn.Write([]byte(command + CommandDelimiter + params + Eol))
-		if err != nil {
-			log.Print("Error writing to peer: ", err)
-		}
+			c.handleResponse(response)
 
-		response, _ := bufio.NewReader(conn).ReadString(Eol[0])
-
-		if c.IsDebugEnabled() {
-			fmt.Printf("\n[As Client] received from peer: \nPEER[%s]\nFOR CMD[%s]\nRESPONSE[%s]\n", conn.RemoteAddr().String(), command, response)
-		}
-		c.handlePeerResponseForRequest(command, response, conn)
-
-		err = conn.Close()
-		if err != nil {
-			log.Print("Error closing connection: ", err)
-		}
-
+			if receiveErr != nil {
+				log.Println(receiveErr)
+			}
+		}(peerAddress)
 	}
 
 }
 
-func (c *Client) handlePeerResponseForRequest(command string, response string, conn net.Conn) {
-	switch command {
-	case RequestNodeAddress:
-		_, err := conn.Write([]byte(Identify + CommandDelimiter + c.network.nodeAddress + Eol))
-		if err != nil {
-			log.Print("Error writing to peer: ", err)
+func (c *Client) handleResponse(response *protocol.Message) {
+	// First, marshal the payload back to JSON
+	switch response.Type {
+	case protocol.MsgPeerDiscovery:
+		receivedPeers := make(map[string]Peer)
+		if err := json.Unmarshal(response.Payload, &receivedPeers); err != nil {
+			log.Println("Error unmarshaling to map[string]Peer:", err)
+			return
 		}
-		break
-	case Identify:
-		break
-	case RequestPeersList:
-		responseElements := strings.Split(response, CommandDelimiter)
-		newPeersJson := responseElements[len(responseElements)-1]
-		newPeers := make(map[string]struct{})
-		err := json.Unmarshal([]byte(newPeersJson), &newPeers)
-		if err != nil {
-			log.Print("Error parsing peers list: ", err)
-			break
+
+		// Now you can use receivedPeers as a map[string]Peer
+		for addr, peer := range receivedPeers {
+			c.network.AddNewDiscoveredPeer(addr, peer)
 		}
-		for newPeer := range newPeers {
-			c.network.AddNewDiscoveredPeer(newPeer, Peer{Connection: nil, Status: false})
-		}
-		break
-	default:
-		fmt.Println("Received Unknown CMD [SRC CMD:" + command + " ]: " + response)
 		break
 	}
 }

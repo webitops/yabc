@@ -1,12 +1,11 @@
 package network
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"strings"
+	"yabc/protocol"
 )
 
 type Server struct {
@@ -57,42 +56,26 @@ func (s *Server) handlePeerRequest(conn net.Conn) {
 		}
 	}(conn)
 
-	command, err := bufio.NewReader(conn).ReadString(Eol[0])
+	request, err := protocol.Receive(conn)
 
 	if err != nil {
-		if s.IsDebugEnabled() {
-			fmt.Println("[As Server] Peer disconnected." + conn.RemoteAddr().String())
+		if err != io.EOF {
+			log.Printf("Error reading from connection: %v", err)
 		}
-		s.network.peerDisconnected(conn.RemoteAddr().String())
 		return
 	}
 
-	s.HandleRequestCommand(conn, command)
-}
+	switch request.Type {
+	case protocol.MsgPeerDiscovery:
+		s.network.AddNewDiscoveredPeer(request.Sender, Peer{Connection: conn, Status: true})
+		s.network.peerIsOnline(request.Sender)
+		response := protocol.NewMessage(protocol.MsgPeerDiscovery, s.network.GetAllKnownPeersAddresses(), s.network.GetNodeAddress())
+		err := protocol.Send(response, conn)
 
-func (s *Server) HandleRequestCommand(conn net.Conn, rawCommand string) {
-	if strings.Contains(rawCommand, Identify+CommandDelimiter) {
-		newPeer := strings.Split(rawCommand, CommandDelimiter)[1]
-		s.network.AddNewDiscoveredPeer(strings.Trim(newPeer, Eol), Peer{Connection: conn, Status: true})
-		_, err := conn.Write([]byte(Done + CommandDelimiter + Identify + CommandDelimiter + newPeer + Eol))
 		if err != nil {
-			log.Print("Error writing to peer: ", err)
+			log.Printf("Error writing response: %v", err)
 		}
-	} else if strings.Contains(rawCommand, RequestPeersList+CommandDelimiter) {
-		peersJson, err := json.Marshal(s.network.GetAllKnownPeersAddresses())
-		if err != nil {
-			log.Print("Error marshalling peers list: ", err)
-		}
-		_, err = conn.Write([]byte(Done + CommandDelimiter + RequestPeersList + CommandDelimiter + string(peersJson) + Eol))
-		if err != nil {
-			log.Print("Error writing to peer: ", err)
-		}
-	} else {
-		fmt.Println("[As Server] Received Unknown: " + rawCommand)
-
-		_, err := conn.Write([]byte(Done + Eol))
-		if err != nil {
-			log.Print("Error writing to peer: ", err)
-		}
+	default:
+		log.Printf("Unknown message type: %s", request.Type)
 	}
 }

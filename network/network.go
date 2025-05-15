@@ -4,17 +4,10 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"yabc/protocol"
 )
 
 const DefaultNodeAddress = "127.0.0.1:7071"
-const (
-	Done               = "DONE"
-	Identify           = "IDENTIFY"
-	RequestPeersList   = "REQUEST_PEERS_LIST"
-	RequestNodeAddress = "REQUEST_NODE_ADDRESS"
-	Eol                = "\n"
-	CommandDelimiter   = ">>>"
-)
 
 type Network struct {
 	server          *Server
@@ -26,12 +19,12 @@ type Network struct {
 }
 
 type Peer struct {
-	Connection net.Conn
-	Status     bool
+	Connection net.Conn `json:"-"`
+	Status     bool     `json:"status"`
 }
 
-func (n *Network) BroadcastMessage(message string) {
-	n.client.SendToPeers("", message)
+func (n *Network) BroadcastMessage(msg *protocol.Message) {
+	n.client.SendToPeers(msg)
 }
 
 func NewNetwork(nodeAddress string, options map[string]string) *Network {
@@ -71,7 +64,6 @@ func (n *Network) Start() {
 		fmt.Printf("\n\n*** DEBUG ENABLED ***\n\n")
 	}
 
-	go n.client.IntroduceSelf()
 	go n.client.RequestPeersList()
 
 	n.server.Serve()

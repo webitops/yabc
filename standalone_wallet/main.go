@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"yabc/blockchain"
+	"yabc/protocol"
 )
 
 func main() {
@@ -25,6 +25,8 @@ func main() {
 		Data:    *data,
 	}
 
+	msg := protocol.NewMessage(protocol.MsgSubmitTx, transaction, "current_wallet_address")
+
 	socketPath := filepath.Join(os.TempDir(), "yabc_wallet_127.0.0.1:"+*socketPort+".sock")
 
 	conn, err := net.Dial("unix", socketPath)
@@ -39,14 +41,10 @@ func main() {
 		panic(err)
 	}
 
-	serializedTransaction, err := json.Marshal(transaction)
+	message, _ := msg.Encode()
+	fmt.Println(string(message))
 
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(serializedTransaction))
-
-	_, err = conn.Write([]byte(serializedTransaction))
+	_, err = conn.Write(message)
 	if err != nil {
 		panic(err)
 	}

@@ -1,10 +1,12 @@
 package network
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"yabc/models"
 	"yabc/protocol"
 )
 
@@ -75,6 +77,24 @@ func (s *Server) handlePeerRequest(conn net.Conn) {
 		if err != nil {
 			log.Printf("Error writing response: %v", err)
 		}
+		break
+	case protocol.MsgSubmitTx:
+		var tx models.Transaction
+		err := json.Unmarshal(request.Payload, &tx)
+		if err != nil {
+			log.Printf("Error unmarshaling transaction: %v", err)
+			return
+		}
+		fmt.Println("Received transaction: ")
+		fmt.Println(tx)
+		response := protocol.NewMessage(protocol.MsgSubmitTx, "OK", s.network.GetNodeAddress())
+
+		sendErr := protocol.Send(response, conn)
+
+		if sendErr != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		break
 	default:
 		log.Printf("Unknown message type: %s", request.Type)
 	}

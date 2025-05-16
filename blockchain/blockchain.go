@@ -7,12 +7,13 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"yabc/models"
 	"yabc/network"
 	"yabc/protocol"
 )
 
 type Blockchain struct {
-	blocks  []*Block
+	blocks  []*models.Block
 	network *network.Network
 	config  *Config
 }

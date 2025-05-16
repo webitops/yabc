@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"yabc/blockchain"
+	"yabc/models"
 	"yabc/protocol"
 )
 
@@ -18,7 +17,7 @@ func main() {
 
 	flag.Parse()
 
-	transaction := &blockchain.Transaction{
+	transaction := &models.Transaction{
 		Address: "current_wallet_address",
 		To:      []string{*address},
 		Amount:  *amount,
@@ -41,10 +40,8 @@ func main() {
 		panic(err)
 	}
 
-	message, _ := msg.Encode()
-	fmt.Println(string(message))
+	protocol.Send(msg, conn)
 
-	_, err = conn.Write(message)
 	if err != nil {
 		panic(err)
 	}

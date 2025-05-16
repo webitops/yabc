@@ -1,4 +1,4 @@
-package blockchain
+package models
 
 type Transaction struct {
 	Address   string   `json:"address"`

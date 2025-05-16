@@ -82,5 +82,11 @@ func (c *Client) handleResponse(response *protocol.Message) {
 			c.network.AddNewDiscoveredPeer(addr, peer)
 		}
 		break
+	case protocol.MsgSubmitTx:
+		log.Println("Received transaction: ACCEPTED")
+		break
+
+	default:
+		log.Printf("Unknown message type: %s", response.Type)
 	}
 }

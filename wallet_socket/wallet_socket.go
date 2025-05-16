@@ -2,7 +2,6 @@ package wallet_socket
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -56,14 +55,10 @@ func (s *WalletSocket) handleWalletRequest(conn net.Conn) {
 		}
 	}(conn)
 
-	message, err := io.ReadAll(conn)
+	msg, receiveErr := protocol.Receive(conn)
 
-	msg := &protocol.Message{}
-
-	msg, _ = protocol.DecodeMessage(message)
-
-	if err != nil {
-		log.Println("Error reading from connection: ", err)
+	if receiveErr != nil {
+		log.Println("Error reading from connection: ", receiveErr)
 	}
 
 	s.blockchain.BroadcastTransaction(msg)

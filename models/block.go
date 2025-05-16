@@ -1,4 +1,4 @@
-package blockchain
+package models
 
 type Block struct {
 	data         string
